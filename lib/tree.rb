@@ -23,6 +23,26 @@ class Tree
     insert_rec(new_node, @root)
   end
 
+  def delete(value)
+    node = find(value)
+    case node
+    when nil then nil
+    when @root then delete_root
+    else
+      delete_node(node)
+    end
+  end
+
+  def find(value)
+    req_node = Node.new(value)
+    find_rec(req_node)
+  end
+
+  def find_parent(value)
+    child = Node.new(value)
+    find_parent_rec(child)
+  end
+
   def pretty_print(node = @root, prefix = '', is_left = true)
     pretty_print(node.right_child, "#{prefix}#{is_left ? '│   ' : '    '}", false) if node.right_child
     puts "#{prefix}#{is_left ? '└── ' : '┌── '}#{node.value}"
@@ -33,16 +53,16 @@ class Tree
 
   def insert_rec(new_node, current_node, root_node = current_node, path = nil)
     if current_node.nil?
-      link_node(new_node, root_node, path)
+      link(new_node, root_node, path)
       return nil
     end
-    next_path = node_path(current_node, new_node)
+    next_path = take_path(current_node, new_node)
     next_node = pick_child(current_node, next_path)
     insert_rec(new_node, next_node, current_node, next_path)
   end
 
-  def node_path(root_node, new_node)
-    new_node < root_node ? 'left' : 'right'
+  def take_path(current_node, node)
+    node <= current_node ? 'left' : 'right'
   end
 
   def pick_child(node, path)
@@ -52,10 +72,78 @@ class Tree
     end
   end
 
-  def link_node(new_node, root_node, path)
+  def link(new_node, root_node, path)
     case path
     when 'left' then root_node.left_child = new_node
     when 'right' then root_node.right_child = new_node
     end
+  end
+
+  def find_rec(req_node, current_node = @root)
+    return nil if current_node.nil?
+    return current_node if current_node == req_node
+
+    next_path = take_path(current_node, req_node)
+    next_node = pick_child(current_node, next_path)
+    find_rec(req_node, next_node)
+  end
+
+  def find_parent_rec(child, current_node = @root)
+    return nil if current_node.nil?
+    return current_node if child?(child, current_node)
+
+    next_path = take_path(current_node, child)
+    next_node = pick_child(current_node, next_path)
+    find_parent_rec(child, next_node)
+  end
+
+  def find_next_biggest(node)
+    find_next_biggest_rec(node.right_child)
+  end
+
+  def find_next_biggest_rec(node)
+    return node if node.left_child.nil?
+
+    find_next_biggest_rec(node.left_child)
+  end
+
+  def children_of(node)
+    [node.left_child, node.right_child].compact
+  end
+
+  def child?(node, parent_node)
+    children_of(parent_node).include?(node)
+  end
+
+  def num_of_children(node)
+    children_of(node).size
+  end
+
+  def delete_node(rm_node)
+    parent_node = find_parent_rec(rm_node)
+    path = take_path(parent_node, rm_node)
+    case num_of_children(rm_node)
+    when 0 then link(nil, parent_node, path) 
+    when 1 then replacement = children_of(rm_node).first
+    when 2
+      replacement = find_next_biggest(rm_node)
+      delete_node(replacement)
+      link(rm_node.left_child, replacement, 'left')
+      link(rm_node.right_child, replacement, 'right') unless rm_node.right_child == replacement
+    end
+    link(replacement, parent_node, path)
+  end
+
+  def delete_root
+    case num_of_children(@root)
+    when 0 then return @root = nil
+    when 1 then replacement = children_of(@root).first
+    when 2
+      replacement = find_next_biggest(@root)
+      delete(replacement.value)
+      link(@root.left_child, replacement, 'left')
+      link(@root.right_child, replacement, 'right') unless @root.right_child == replacement
+    end
+    @root = replacement
   end
 end
