@@ -43,6 +43,62 @@ class Tree
     find_parent_rec(child)
   end
 
+  def level_order
+    unless block_given?
+      arr = []
+      level_order { |node| arr << node }
+      return arr
+    end
+
+    queue = [@root]
+    until queue.empty?
+      node = queue.shift
+      yield(node.value)
+      queue.push(node.left_child)
+      queue.push(node.right_child)
+      queue.compact!
+    end
+  end
+
+  def inorder(node = @root, &block)
+    unless block_given?
+      arr = []
+      inorder { |node| arr << node }
+      return arr
+    end
+    return if node.nil?
+
+    inorder(node.left_child, &block)
+    yield(node.value)
+    inorder(node.right_child, &block)
+  end
+
+  def preorder(node = @root, &block)
+    unless block_given?
+      arr = []
+      preorder { |node| arr << node }
+      return arr
+    end
+    return if node.nil?
+
+    yield(node.value)
+    preorder(node.left_child, &block)
+    preorder(node.right_child, &block)
+  end
+
+  def postorder(node = @root, &block)
+    unless block_given?
+      arr = []
+      postorder { |node| arr << node }
+      return arr
+    end
+    return if node.nil?
+
+    postorder(node.left_child, &block)
+    postorder(node.right_child, &block)
+    yield(node.value)
+  end
+
   def pretty_print(node = @root, prefix = '', is_left = true)
     pretty_print(node.right_child, "#{prefix}#{is_left ? '│   ' : '    '}", false) if node.right_child
     puts "#{prefix}#{is_left ? '└── ' : '┌── '}#{node.value}"
@@ -123,7 +179,7 @@ class Tree
     parent_node = find_parent_rec(rm_node)
     path = take_path(parent_node, rm_node)
     case num_of_children(rm_node)
-    when 0 then link(nil, parent_node, path) 
+    when 0 then link(nil, parent_node, path)
     when 1 then replacement = children_of(rm_node).first
     when 2
       replacement = find_next_biggest(rm_node)

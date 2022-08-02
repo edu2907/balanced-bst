@@ -23,3 +23,19 @@ my_tree.pretty_print
 
 my_tree.delete(8)
 my_tree.pretty_print
+
+my_tree.level_order { |node| puts node }
+p my_tree.level_order
+puts "\n"
+
+my_tree.preorder { |node| puts node }
+p my_tree.preorder
+puts "\n"
+
+my_tree.inorder { |node| puts node }
+p my_tree.inorder
+puts "\n"
+
+my_tree.postorder { |node| puts node }
+p my_tree.postorder
+puts "\n"
