@@ -99,6 +99,23 @@ class Tree
     yield(node.value)
   end
 
+  def height(node = @root)
+    return -1 if node.nil?
+
+    left_height = height(node.left_child) 
+    right_height = height(node.right_child)
+    [left_height, right_height].max + 1
+  end
+
+  def depth(searching_node, current_node = @root, depth_count = 0)
+    return if current_node.nil?
+    return depth_count if searching_node == current_node
+
+    left_depth = depth(searching_node, current_node.left_child, depth_count + 1)
+    right_depth = depth(searching_node, current_node.right_child, depth_count + 1)
+    [left_depth, right_depth].compact.first
+  end
+
   def pretty_print(node = @root, prefix = '', is_left = true)
     pretty_print(node.right_child, "#{prefix}#{is_left ? '│   ' : '    '}", false) if node.right_child
     puts "#{prefix}#{is_left ? '└── ' : '┌── '}#{node.value}"

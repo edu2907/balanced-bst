@@ -39,3 +39,15 @@ puts "\n"
 my_tree.postorder { |node| puts node }
 p my_tree.postorder
 puts "\n"
+
+puts my_tree.height
+puts "\n"
+
+my_tree.pretty_print
+test_node1 = my_tree.find(1)
+test_node2 = my_tree.find(324)
+puts my_tree.height(test_node1)
+puts my_tree.height(test_node2)
+puts "\n"
+puts my_tree.depth(test_node1)
+puts my_tree.depth(test_node2)
