@@ -51,3 +51,19 @@ puts my_tree.height(test_node2)
 puts "\n"
 puts my_tree.depth(test_node1)
 puts my_tree.depth(test_node2)
+puts "\n"
+
+my_tree.pretty_print
+puts my_tree.balanced?
+puts "\n"
+
+my_tree.delete(6)
+my_tree.delete(7)
+
+my_tree.pretty_print
+puts my_tree.balanced?
+puts "\n"
+
+my_tree.rebalance
+my_tree.pretty_print
+puts my_tree.balanced?

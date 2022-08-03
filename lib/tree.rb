@@ -116,6 +116,16 @@ class Tree
     [left_depth, right_depth].compact.first
   end
 
+  def balanced?
+    height_diff = balanceHeight(@root)
+    height_diff != -1
+  end
+
+  def rebalance
+    arr = inorder
+    @root = build_tree(arr)
+  end
+
   def pretty_print(node = @root, prefix = '', is_left = true)
     pretty_print(node.right_child, "#{prefix}#{is_left ? '│   ' : '    '}", false) if node.right_child
     puts "#{prefix}#{is_left ? '└── ' : '┌── '}#{node.value}"
@@ -218,5 +228,16 @@ class Tree
       link(@root.right_child, replacement, 'right') unless @root.right_child == replacement
     end
     @root = replacement
+  end
+
+  def balanceHeight(current_node)
+    return 0 if current_node.nil?
+
+    left_height = balanceHeight(current_node.left_child)
+    right_height = balanceHeight(current_node.right_child)
+    return -1 if (left_height == -1) || (right_height == -1)
+    return -1 if (left_height - right_height) > 1
+
+    [left_height, right_height].max + 1
   end
 end
