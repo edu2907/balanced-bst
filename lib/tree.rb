@@ -137,8 +137,9 @@ class Tree
   def insert_rec(new_node, current_node, root_node = current_node, path = nil)
     if current_node.nil?
       link(new_node, root_node, path)
-      return nil
+      return
     end
+    return if current_node == new_node
     next_path = take_path(current_node, new_node)
     next_node = pick_child(current_node, next_path)
     insert_rec(new_node, next_node, current_node, next_path)
