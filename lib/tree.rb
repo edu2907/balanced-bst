@@ -8,7 +8,7 @@ class Tree
   end
 
   def build_tree(array)
-    return nil if array.size < 1
+    return nil if array.empty?
 
     mid = array.size / 2
     root = Node.new(array[mid])
@@ -74,7 +74,7 @@ class Tree
 
   def inorder(node = @root, arr = [], &block)
     return if node.nil?
-    
+
     inorder(node.left_child, arr, &block)
     arr << node.value
     yield(node.value) if block_given?
@@ -123,7 +123,7 @@ class Tree
   end
 
   def balanced?
-    balanceHeight(@root) != 1
+    balance_height(@root) != 1
   end
 
   def rebalance
@@ -146,7 +146,7 @@ class Tree
     return if current_node.nil?
     return current_node if yield(current_node)
 
-    next_node =  searching_node < current_node ? current_node.left_child : current_node.right_child
+    next_node = searching_node < current_node ? current_node.left_child : current_node.right_child
     binary_search(searching_node, next_node, &condition)
   end
 
@@ -169,18 +169,18 @@ class Tree
 
     find_lowest(node.left_child)
   end
-  
+
   # Return direct node childs, that aren't nil
   def children_of(node)
     [node.left_child, node.right_child].compact
   end
 
   # Auxiliar recursive function for #balanced?, returns -1 if tree is unbalanced
-  def balanceHeight(current_node)
+  def balance_height(current_node)
     return 0 if current_node.nil?
 
-    left_height = balanceHeight(current_node.left_child)
-    right_height = balanceHeight(current_node.right_child)
+    left_height = balance_height(current_node.left_child)
+    right_height = balance_height(current_node.right_child)
     return -1 if (left_height == -1) || (right_height == -1)
     return -1 if (left_height - right_height).abs > 1
 
