@@ -20,89 +20,95 @@ class Tree
 
   def insert(value)
     new_node = Node.new(value)
-    insert_rec(new_node, @root)
+    binary_search(new_node) do |node|
+      if new_node < node
+        node.left_child.nil? ? node.left_child = new_node : false
+      elsif new_node > node
+        node.right_child.nil? ? node.right_child = new_node : false
+      else
+        # When the new_node already exists in tree
+        return
+      end
+    end
   end
 
   def delete(value)
-    node = find(value)
-    case node
-    when nil then nil
-    when @root then delete_root
+    rm_node = find(value)
+    return if rm_node.nil?
+
+    parent_node = find_parent(rm_node.value)
+    if rm_node == @root
+      @root = find_replacement(rm_node)
+    elsif rm_node <= parent_node
+      parent_node.left_child = find_replacement(rm_node)
     else
-      delete_node(node)
+      parent_node.right_child = find_replacement(rm_node)
     end
   end
 
   def find(value)
     req_node = Node.new(value)
-    find_rec(req_node)
+
+    binary_search(req_node) { |node| node == req_node }
   end
 
   def find_parent(value)
     child = Node.new(value)
-    find_parent_rec(child)
+
+    binary_search(child) { |node| node.left_child == child || node.right_child == child }
   end
 
   def level_order
-    unless block_given?
-      arr = []
-      level_order { |node| arr << node }
-      return arr
-    end
+    arr = []
 
     queue = [@root]
     until queue.empty?
       node = queue.shift
-      yield(node.value)
-      queue.push(node.left_child)
-      queue.push(node.right_child)
-      queue.compact!
+      block_given? ? yield(node.value) : arr << node.value
+      queue.push(node.left_child) unless node.left_child.nil?
+      queue.push(node.right_child) unless node.right_child.nil?
     end
+
+    return arr unless block_given?
   end
 
-  def inorder(node = @root, &block)
-    unless block_given?
-      arr = []
-      inorder { |node| arr << node }
-      return arr
-    end
+  def inorder(node = @root, arr = [], &block)
     return if node.nil?
+    
+    inorder(node.left_child, arr, &block)
+    arr << node.value
+    yield(node.value) if block_given?
+    inorder(node.right_child, arr, &block)
 
-    inorder(node.left_child, &block)
-    yield(node.value)
-    inorder(node.right_child, &block)
+    return arr unless block_given?
   end
 
-  def preorder(node = @root, &block)
-    unless block_given?
-      arr = []
-      preorder { |node| arr << node }
-      return arr
-    end
+  def preorder(node = @root, arr = [], &block)
     return if node.nil?
 
-    yield(node.value)
-    preorder(node.left_child, &block)
-    preorder(node.right_child, &block)
+    arr << node.value
+    yield(node.value) if block_given?
+    preorder(node.left_child, arr, &block)
+    preorder(node.right_child, arr, &block)
+
+    return arr unless block_given?
   end
 
-  def postorder(node = @root, &block)
-    unless block_given?
-      arr = []
-      postorder { |node| arr << node }
-      return arr
-    end
+  def postorder(node = @root, arr = [], &block)
     return if node.nil?
 
-    postorder(node.left_child, &block)
-    postorder(node.right_child, &block)
-    yield(node.value)
+    postorder(node.left_child, arr, &block)
+    postorder(node.right_child, arr, &block)
+    arr << node.value
+    yield(node.value) if block_given?
+
+    return arr unless block_given?
   end
 
   def height(node = @root)
     return -1 if node.nil?
 
-    left_height = height(node.left_child) 
+    left_height = height(node.left_child)
     right_height = height(node.right_child)
     [left_height, right_height].max + 1
   end
@@ -117,8 +123,7 @@ class Tree
   end
 
   def balanced?
-    height_diff = balanceHeight(@root)
-    height_diff != -1
+    balanceHeight(@root) != 1
   end
 
   def rebalance
@@ -134,110 +139,50 @@ class Tree
 
   private
 
-  def insert_rec(new_node, current_node, root_node = current_node, path = nil)
-    if current_node.nil?
-      link(new_node, root_node, path)
-      return
+  # Auxiliar methods
+
+  # Realize a binary search and return when a given condition is true
+  def binary_search(searching_node, current_node = @root, &condition)
+    return if current_node.nil?
+    return current_node if yield(current_node)
+
+    next_node =  searching_node < current_node ? current_node.left_child : current_node.right_child
+    binary_search(searching_node, next_node, &condition)
+  end
+
+  # Finds the substitute for the rm_node
+  def find_replacement(rm_node)
+    if children_of(rm_node).size < 2
+      replacement = children_of(rm_node).first
+    else
+      replacement = find_lowest(rm_node.right_child)
+      delete(replacement.value)
+      replacement.left_child = rm_node.left_child
+      replacement.right_child = rm_node.right_child unless rm_node.right_child == replacement
     end
-    return if current_node == new_node
-    next_path = take_path(current_node, new_node)
-    next_node = pick_child(current_node, next_path)
-    insert_rec(new_node, next_node, current_node, next_path)
+    replacement
   end
 
-  def take_path(current_node, node)
-    node <= current_node ? 'left' : 'right'
-  end
-
-  def pick_child(node, path)
-    case path
-    when 'left' then node.left_child
-    when 'right' then node.right_child
-    end
-  end
-
-  def link(new_node, root_node, path)
-    case path
-    when 'left' then root_node.left_child = new_node
-    when 'right' then root_node.right_child = new_node
-    end
-  end
-
-  def find_rec(req_node, current_node = @root)
-    return nil if current_node.nil?
-    return current_node if current_node == req_node
-
-    next_path = take_path(current_node, req_node)
-    next_node = pick_child(current_node, next_path)
-    find_rec(req_node, next_node)
-  end
-
-  def find_parent_rec(child, current_node = @root)
-    return nil if current_node.nil?
-    return current_node if child?(child, current_node)
-
-    next_path = take_path(current_node, child)
-    next_node = pick_child(current_node, next_path)
-    find_parent_rec(child, next_node)
-  end
-
-  def find_next_biggest(node)
-    find_next_biggest_rec(node.right_child)
-  end
-
-  def find_next_biggest_rec(node)
+  # Find the lowest child, starting from node
+  def find_lowest(node)
     return node if node.left_child.nil?
 
-    find_next_biggest_rec(node.left_child)
+    find_lowest(node.left_child)
   end
-
+  
+  # Return direct node childs, that aren't nil
   def children_of(node)
     [node.left_child, node.right_child].compact
   end
 
-  def child?(node, parent_node)
-    children_of(parent_node).include?(node)
-  end
-
-  def num_of_children(node)
-    children_of(node).size
-  end
-
-  def delete_node(rm_node)
-    parent_node = find_parent_rec(rm_node)
-    path = take_path(parent_node, rm_node)
-    case num_of_children(rm_node)
-    when 0 then link(nil, parent_node, path)
-    when 1 then replacement = children_of(rm_node).first
-    when 2
-      replacement = find_next_biggest(rm_node)
-      delete_node(replacement)
-      link(rm_node.left_child, replacement, 'left')
-      link(rm_node.right_child, replacement, 'right') unless rm_node.right_child == replacement
-    end
-    link(replacement, parent_node, path)
-  end
-
-  def delete_root
-    case num_of_children(@root)
-    when 0 then return @root = nil
-    when 1 then replacement = children_of(@root).first
-    when 2
-      replacement = find_next_biggest(@root)
-      delete(replacement.value)
-      link(@root.left_child, replacement, 'left')
-      link(@root.right_child, replacement, 'right') unless @root.right_child == replacement
-    end
-    @root = replacement
-  end
-
+  # Auxiliar recursive function for #balanced?, returns -1 if tree is unbalanced
   def balanceHeight(current_node)
     return 0 if current_node.nil?
 
     left_height = balanceHeight(current_node.left_child)
     right_height = balanceHeight(current_node.right_child)
     return -1 if (left_height == -1) || (right_height == -1)
-    return -1 if (left_height - right_height) > 1
+    return -1 if (left_height - right_height).abs > 1
 
     [left_height, right_height].max + 1
   end
